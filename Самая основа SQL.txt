@@ -1,0 +1,97 @@
+"""
+truncate - clear rhe table;
+constraint - restriction;
+DISTINCT - ставь после селекта для уникальной выборки
+
+ALTER TABLE название_таблицы 
+{ ADD название_столбца тип_данных_столбца [атрибуты_столбца] | 
+  DROP COLUMN название_столбца |
+  MODIFY COLUMN название_столбца тип_данных_столбца [атрибуты_столбца] |
+  ALTER COLUMN название_столбца SET DEFAULT значение_по_умолчанию |
+  ADD [CONSTRAINT] определение_ограничения |
+  DROP [CONSTRAINT] имя_ограничения}
+
+
+UPDATE имя_таблицы
+SET столбец1 = значение1, столбец2 = значение2, ... столбецN = значениеN
+[WHERE условие_обновления]
+
+DELETE FROM имя_таблицы
+[WHERE условие_удаления]
+
+WHERE выражение [NOT] REGEXP регулярное выражение
+Регулярное выражение может принимать следующие специальные символы:
+^: указывает на начало строки
+$: указывает на конец строки
+.: соответствует любому одиночному символу
+[символы]: соответствует любому одиночному символу из скобок
+[начальный_символ-конечный_символ]: соответствует любому одиночному символу из диапазона символов
+|: отделяет два шаблона строки, и значение должно соответствовать одну из этих шаблонов
+
+SELECT AVG( DISTINCT Price * ProductCount),COUNT(*) AS prodcount ,COUNT(ALL manufacturer) ,MIN(Price), MAX(Price), SUM(ProductCount * Price) FROM Products;
+тут avg-среднее, каунт*считает и пустрые строки, DISTINCT - уникальные значения, по умолчанию стоит ALL -все подряд.
+
+SELECT * FROM Products
+WHERE NOT EXISTS (SELECT * FROM Orders WHERE Products.Id = Orders.ProductId)
+работает в разы быстрее, чем
+SELECT *
+FROM Products
+WHERE Id NOT IN (SELECT ProductId FROM Orders)
+так как не делает выборку, а просто сверяет значения.
+
+
+Соединения таблиц:
+1. Неявное соединение путём сведения данных.
+SELECT C.FirstName, P.ProductName, O.*
+FROM Orders AS O, Customers AS C, Products AS P
+WHERE O.CustomerId = C.Id AND O.ProductId=P.Id;
+2. Явно, через join
+SELECT Orders.CreatedAt, Customers.FirstName, Products.ProductName 
+FROM Orders
+JOIN Products ON Products.Id = Orders.ProductId AND Products.Manufacturer='Apple'
+JOIN Customers ON Customers.Id=Orders.CustomerId
+ORDER BY Customers.FirstName;
+
+
+
+"""
+
+
+CREATE DATABASE if not exists productsdb;
+USE productsdb;
+CREATE TABLE if not exists Products
+(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    ProductName VARCHAR(30) NOT NULL,
+    Manufacturer VARCHAR(20) NOT NULL,
+    ProductCount INT DEFAULT 0,
+    Price DECIMAL NOT NULL
+);
+truncate table products;
+
+INSERT Products(ProductName, Manufacturer, ProductCount, Price) 
+VALUES ('iPhone X', 'Apple', 5, 76000);
+
+INSERT Products(ProductName, Manufacturer, Price) 
+VALUES ('Galaxy S9', 'Samsung', 63000);
+
+INSERT Products(ProductName, Manufacturer, Price, ProductCount) 
+VALUES ('Nokia 9', 'HDM Global', 41000, DEFAULT);
+
+INSERT Products(ProductName, Manufacturer, Price, ProductCount) 
+VALUES ('Nokia 9', 'HDM Global', 41000, NULL);
+
+INSERT Products(ProductName, Manufacturer, Price, ProductCount) 
+VALUES
+('iPhone 8', 'Apple', 51000, 3),
+('P20 Lite', 'Huawei', 34000, 4),
+('Galaxy S8', 'Samsung', 46000, 2);
+
+select ProductName as title, ProductCount*Price as sum from products
+where Price BETWEEN 20000 AND 70000 
+and Manufacturer IN ('Samsung', 'huawei') 
+or productname LIKE 'iPhone%'
+and productname regexp '7$|8$'
+order by sum DESC,/*- убывание, 1 приоритет*/
+productname ASC /*- возрастание, 2 приоритет*/
+limit 1, 2;/*(необяз)номер строки(0-первая), количество строк результата*/
