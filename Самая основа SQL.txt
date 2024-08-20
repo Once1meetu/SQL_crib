@@ -51,7 +51,12 @@ FROM Orders
 JOIN Products ON Products.Id = Orders.ProductId AND Products.Manufacturer='Apple'
 JOIN Customers ON Customers.Id=Orders.CustomerId
 ORDER BY Customers.FirstName;
-
+3. outer left join
+SELECT Customers.FirstName, Orders.CreatedAt, 
+       Products.ProductName, Products.Manufacturer
+FROM Orders /*тут заказы присоединяется слева, значит будут выводиться ВСЕ строки этой таблицы, это и есть отличие от inner join*/
+LEFT JOIN Customers ON Orders.CustomerId = Customers.Id
+LEFT JOIN Products ON Orders.ProductId = Products.Id;
 
 
 """
