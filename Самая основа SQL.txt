@@ -1,5 +1,5 @@
 """
-truncate - clear rhe table;
+truncate - clear the table;
 constraint - restriction;
 DISTINCT - ставь после селекта для уникальной выборки
 
@@ -28,7 +28,7 @@ $: указывает на конец строки
 [начальный_символ-конечный_символ]: соответствует любому одиночному символу из диапазона символов
 |: отделяет два шаблона строки, и значение должно соответствовать одну из этих шаблонов
 
-SELECT AVG( DISTINCT Price * ProductCount),COUNT(*) AS prodcount ,COUNT(ALL manufacturer) ,MIN(Price), MAX(Price), SUM(ProductCount * Price) FROM Products;
+SELECT AVG( DISTINCT Price * ProductCount),COUNT(*) AS prodcount ,COUNT(DISTINCT manufacturer) ,MIN(Price), MAX(Price), SUM(ProductCount * Price) FROM Products;
 тут avg-среднее, каунт*считает и пустрые строки, DISTINCT - уникальные значения, по умолчанию стоит ALL -все подряд(то есть дистинкт реально посчитает количество производителей, а олл посчитает где столбец производителя не пуст)
 
 SELECT * FROM Products
@@ -75,12 +75,55 @@ FROM Customers WHERE AccountSum < 3000
 UNION SELECT FirstName, LastName, AccountSum + AccountSum * 0.3 AS TotalSum 
 FROM Customers WHERE AccountSum >= 3000;
 
+
+Как работает CASE.
+SELECT ProductName, ProductCount, 
+CASE
+    WHEN ProductCount = 1 
+        THEN 'Товар заканчивается'
+    WHEN ProductCount = 2 
+        THEN 'Мало товара'
+    WHEN ProductCount = 3 
+        THEN 'Есть в наличии'
+    ELSE 'Много товара'
+END AS Category
+FROM Products;
+
+
+Как работает IF
+SELECT ProductName, Manufacturer,
+    IF(ProductCount > 3, 'Много товара', 'Мало товара')
+FROM Products;
+
+
+Как работает IFNULL.
+CREATE TABLE Clients
+(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    FirstName VARCHAR(20) NOT NULL,
+    LastName VARCHAR(20) NOT NULL,
+    Phone VARCHAR(20) NULL,
+    Email VARCHAR(20) NULL
+);
+  
+INSERT INTO Clients (FirstName, LastName, Phone, Email)
+VALUES ('Tom', 'Smith', '+36436734', NULL),
+('Bob', 'Simpson', NULL, NULL);
+
+SELECT FirstName, LastName,
+        IFNULL(Phone, 'не определено') AS Phone,
+        IFNULL(Email, 'неизвестно') AS Email
+FROM Clients;
+
+Как работает COALESCE
+SELECT FirstName, LastName,
+        COALESCE(Phone, Email, 'не определено') AS Contacts
+FROM Clients;
 """
-
-
-CREATE DATABASE if not exists productsdb;
+CREATE DATABASE IF NOT EXISTS productsdb;
 USE productsdb;
-CREATE TABLE if not exists Products
+
+CREATE TABLE IF NOT EXISTS Products
 (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     ProductName VARCHAR(30) NOT NULL,
@@ -88,6 +131,27 @@ CREATE TABLE if not exists Products
     ProductCount INT DEFAULT 0,
     Price DECIMAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS Customers
+(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    FirstName VARCHAR(30) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS Orders
+(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    ProductId INT NOT NULL,
+    CustomerId INT NOT NULL,
+    CreatedAt DATE NOT NULL,
+    Price DECIMAL NOT NULL,
+    CONSTRAINT orders_customers_fk
+    FOREIGN KEY (CustomerId) REFERENCES Customers(Id) ON DELETE CASCADE,
+    CONSTRAINT orders_products_fk
+    FOREIGN KEY (ProductId) REFERENCES Products(Id) ON DELETE CASCADE
+);
+
+ALTER TABLE Orders
+ADD ProductCount INT DEFAULT 1;
+
 truncate table products;
 
 INSERT Products(ProductName, Manufacturer, ProductCount, Price) 
