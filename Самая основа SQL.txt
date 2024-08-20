@@ -29,7 +29,7 @@ $: указывает на конец строки
 |: отделяет два шаблона строки, и значение должно соответствовать одну из этих шаблонов
 
 SELECT AVG( DISTINCT Price * ProductCount),COUNT(*) AS prodcount ,COUNT(ALL manufacturer) ,MIN(Price), MAX(Price), SUM(ProductCount * Price) FROM Products;
-тут avg-среднее, каунт*считает и пустрые строки, DISTINCT - уникальные значения, по умолчанию стоит ALL -все подряд.
+тут avg-среднее, каунт*считает и пустрые строки, DISTINCT - уникальные значения, по умолчанию стоит ALL -все подряд(то есть дистинкт реально посчитает количество производителей, а олл посчитает где столбец производителя не пуст)
 
 SELECT * FROM Products
 WHERE NOT EXISTS (SELECT * FROM Orders WHERE Products.Id = Orders.ProductId)
@@ -57,7 +57,23 @@ SELECT Customers.FirstName, Orders.CreatedAt,
 FROM Orders /*тут заказы присоединяется слева, значит будут выводиться ВСЕ строки этой таблицы, это и есть отличие от inner join*/
 LEFT JOIN Customers ON Orders.CustomerId = Customers.Id
 LEFT JOIN Products ON Orders.ProductId = Products.Id;
-
+4. Моё комбо:
+SELECT O.CreatedAT, O.ProductCount, P.ProductName, P.Price, C.Firstname
+FROM Orders AS O
+INNER JOIN Products AS P ON O.ProductId=P.Id AND P.Price>60000
+LEFT OUTER JOIN Customers AS C ON O.CustomerId=C.Id
+ORDER BY O.CreatedAt;
+5. UNION
+SELECT FirstName, LastName
+FROM Customers
+UNION ALL SELECT FirstName, LastName /*ALL делает чтобы повторения (работник является клиентом) не исключались*/
+FROM Employees
+ORDER BY FirstName;
+5.1. union with itself
+SELECT FirstName, LastName, AccountSum + AccountSum * 0.1 AS TotalSum 
+FROM Customers WHERE AccountSum < 3000
+UNION SELECT FirstName, LastName, AccountSum + AccountSum * 0.3 AS TotalSum 
+FROM Customers WHERE AccountSum >= 3000;
 
 """
 
